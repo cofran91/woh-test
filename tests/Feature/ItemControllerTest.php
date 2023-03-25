@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use App\Models\Item;
 use App\Models\User;
+use App\Models\UserItem;
 use Laravel\Sanctum\Sanctum;
 use Database\Seeders\TestingSeeder;
 use App\Http\Controllers\ItemController;
@@ -135,6 +136,56 @@ class ItemControllerTest extends TestCase
             "name" => "Armadura de Bronce",
         ];
         $response = $this->putJson(route('items.update',$item->id), $body );
+
+        $response->assertStatus(422);
+        $response->assertJsonStructure([]);
+    }
+
+    /**
+     * @test
+     */
+    public function buy_items_save_user_item()
+    {
+        $user = Sanctum::actingAs(User::factory()->create(['rol_id' => 2]), ['*']);
+        $item = Item::factory()->create();
+        
+        $response = $this->putJson(route('items.buyItem',$item->id) );
+
+        $response->assertOk();
+        $response->assertJsonStructure([]);
+
+        $items = UserItem::query()
+        ->where('user_id', $user->id)
+        ->where('item_id', $item->id)
+        ->get();
+        $this->assertCount(1, $items);
+    }
+
+    /**
+     * @test
+     */
+    public function buy_items_return_error_when_item_does_not_exist()
+    {
+        $user = Sanctum::actingAs(User::factory()->create(['rol_id' => 2]), ['*']);
+        $item = Item::factory()->create(['id' => 1]);
+        
+        $response = $this->putJson(route('items.buyItem',2) );
+
+        $response->assertStatus(404);
+        $response->assertJsonStructure([]);
+    }
+    
+    /**
+     * @test
+     */
+    public function buy_items_return_error_when_item_has_already_buyed()
+    {
+        $user = Sanctum::actingAs(User::factory()->create(['rol_id' => 2]), ['*']);
+        $item = Item::factory()->create();
+        
+        $firstResponse = $this->putJson(route('items.buyItem',$item->id) );
+        
+        $response = $this->putJson(route('items.buyItem',$item->id) );
 
         $response->assertStatus(422);
         $response->assertJsonStructure([]);
