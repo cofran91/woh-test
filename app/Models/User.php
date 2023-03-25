@@ -2,43 +2,73 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Rol;
+use App\Models\UserType;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+
+    protected $guarded = ['id'];
+
+    public function setPasswordAttribute($password) {
+        $this->attributes['password'] = app('hash')->make($password);
+    }
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
+     * @return BelongsTo
      */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-    ];
+    public function rol(): BelongsTo
+    {
+        return $this->belongsTo(Rol::class);
+    }
+    
+    /**
+     * @return BelongsTo
+     */
+    public function userType(): BelongsTo
+    {
+        return $this->belongsTo(UserType::class);
+    }
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
+     * @return BelongsToMany
      */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    public function items(): BelongsToMany
+    {
+        return $this->belongsToMany(Item::class, 'user_item')->withPivot('equipped')->withTimestamps();
+    }
 
     /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
+     * @return HasMany
      */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+    public function attacksMade(): HasMany
+    {
+        return $this->hasMany(Attack::class, 'attacking_user_id');
+    }
+    
+    /**
+     * @return HasMany
+     */
+    public function receivedAttacks(): HasMany
+    {
+        return $this->hasMany(Attack::class, 'defending_user_id');
+    }
+
+    /**
+     * @return HasOne
+     */
+    public function currentAttack(): HasOne
+    {
+        return $this->hasOne(Attack::class, 'attacking_user_id')->latest();
+    }
 }
