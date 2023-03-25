@@ -9,12 +9,9 @@ use App\Models\UserItem;
 use Laravel\Sanctum\Sanctum;
 use Database\Seeders\TestingSeeder;
 use App\Http\Controllers\ItemController;
-use App\Http\Controllers\UserController;
 use App\Http\Requests\Item\ItemStoreRequest;
-use App\Http\Requests\User\UserStoreRequest;
 use Illuminate\Foundation\Testing\WithFaker;
 use App\Http\Requests\Item\ItemUpdateRequest;
-use App\Http\Requests\User\UserUpdateRequest;
 use Database\Seeders\TruncateAllTablesSeeder;
 use JMac\Testing\Traits\AdditionalAssertions;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -189,6 +186,12 @@ class ItemControllerTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonStructure([]);
+
+        $response->assertExactJson([
+            "success" => false,
+            "message" => 'Item has already been buyed',
+            "body" => null
+        ]);
     }
 
     /**
@@ -239,6 +242,12 @@ class ItemControllerTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonStructure([]);
+
+        $response->assertExactJson([
+            "success" => false,
+            "message" => 'Item not buyed',
+            "body" => null
+        ]);
     }
     
     /**
@@ -256,6 +265,12 @@ class ItemControllerTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonStructure([]);
+
+        $response->assertExactJson([
+            "success" => false,
+            "message" => 'Item equipped already',
+            "body" => null
+        ]);
     }
 
     /**
