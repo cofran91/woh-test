@@ -19,8 +19,12 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('', [UserController::class, 'index'])->name('index');
-        Route::post('', [UserController::class, 'store'])->name('store');
-        Route::put('{id}', [UserController::class, 'update'])->name('update');
-        Route::delete('{id}', [UserController::class, 'destroy'])->name('destroy');
+        
+        Route::middleware(['verifyAdmin'])->group(function () {
+            Route::get('/ulti/player', [UserController::class, 'ultiPlayer'])->name('ultiPlayer');
+            Route::post('', [UserController::class, 'store'])->name('store');
+            Route::put('{id}', [UserController::class, 'update'])->name('update');
+            Route::delete('{id}', [UserController::class, 'destroy'])->name('destroy');
+        });
     });
 });
