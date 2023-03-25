@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ItemController;
 use App\Http\Controllers\UserController;
 
 /*
@@ -25,6 +26,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::post('', [UserController::class, 'store'])->name('store');
             Route::put('{id}', [UserController::class, 'update'])->name('update');
             Route::delete('{id}', [UserController::class, 'destroy'])->name('destroy');
+        });
+    });
+
+    Route::prefix('items')->name('items.')->group(function () {
+        Route::get('', [ItemController::class, 'index'])->name('index');
+
+        Route::middleware(['verifyAdmin'])->group(function () {
+            Route::post('', [ItemController::class, 'store'])->name('store');
+            Route::put('{id}', [ItemController::class, 'update'])->name('update');
+            Route::delete('{id}', [ItemController::class, 'destroy'])->name('destroy');
         });
     });
 });
