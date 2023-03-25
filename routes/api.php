@@ -27,6 +27,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::put('{id}', [UserController::class, 'update'])->name('update');
             Route::delete('{id}', [UserController::class, 'destroy'])->name('destroy');
         });
+
+        Route::get('inventory', [UserController::class, 'inventory'])->name('inventory');
+        Route::get('equipment', [UserController::class, 'equipment'])->name('equipment');
     });
 
     Route::prefix('items')->name('items.')->group(function () {

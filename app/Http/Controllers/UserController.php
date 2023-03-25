@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Item\ItemResource;
 use App\Http\Resources\User\UserResource;
 use App\Http\Requests\User\UserStoreRequest;
 use App\Http\Requests\User\UserUpdateRequest;
@@ -105,5 +106,31 @@ class UserController extends Controller
         } catch (\Throwable $th) {
             return $this->jsonError(null, $th->getCode(), $th->getMessage());
         }
+    }
+
+    /**
+     * @return JsonResponse
+     */
+    public function inventory(): JsonResponse
+    {
+        $user = auth()->user();
+        return $this->jsonSuccess( 
+            ItemResource::collection(
+                $user->items
+            )->response()->getData(true)
+        );
+    }
+    
+    /**
+     * @return JsonResponse
+     */
+    public function equipment(): JsonResponse
+    {
+        $user = auth()->user();
+        return $this->jsonSuccess( 
+            ItemResource::collection(
+                $user->items()->wherePivot('equipped', 1)->get()
+            )->response()->getData(true)
+        );
     }
 }
