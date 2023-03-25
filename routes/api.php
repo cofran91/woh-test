@@ -37,5 +37,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::put('{id}', [ItemController::class, 'update'])->name('update');
             Route::delete('{id}', [ItemController::class, 'destroy'])->name('destroy');
         });
+
+        Route::put('{id}/buy', [ItemController::class, 'buyItem'])->name('buyItem');
+        Route::put('{id}/equip', [ItemController::class, 'equipItem'])->name('equipItem');
     });
 });

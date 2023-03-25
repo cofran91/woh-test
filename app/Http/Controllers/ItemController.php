@@ -103,4 +103,81 @@ class ItemController extends Controller
             return $this->jsonError(null, $th->getCode(), $th->getMessage());
         }
     }
+
+    /**
+     * @param integer $id
+     * @return JsonResponse
+     */
+    public function buyItem($id): JsonResponse
+    {
+        $item = Item::where('id', $id)->first();
+        if (!$item) {
+            return $this->jsonError(null, 404);
+        }
+
+        $user = auth()->user();
+        if ($user->items()->wherePivot('item_id','=', $id)->first()) {
+            return $this->jsonError(null, 422, 'Item has already been buyed');
+        }
+        try {
+            $user->items()->attach($item);
+            return $this->jsonSuccess(
+                ItemResource::make($item),
+                200,
+                'Item buyed successfully'
+            );
+    
+        } catch (\Exception $e) {
+            return $this->jsonError(null, $e->getCode(), $e->getMessage());
+        }
+    }
+    
+    /**
+     * @param integer $id
+     * @return JsonResponse
+     */
+    public function equipItem($id): JsonResponse
+    {
+        $item = Item::where('id', $id)->first();
+        if (!$item) {
+            return $this->jsonError(null, 404);
+        }
+        $user = auth()->user();
+
+        $userItem = UserItem::where(['item_id' => $id , 'user_id' => $user->id])->first();
+        if (!$userItem) {
+            return $this->jsonError(null, 404, 'Item not buyed');
+        }
+        if ($userItem->equipped == 1) {
+            return $this->jsonError(null, 404, 'Item equipped already');
+        }
+        try {
+            DB::beginTransaction();
+            $oldEquippedItems = $user->items()->where('item_type_id','=', $item->item_type_id)->update(['equipped' => 0]);
+            
+            if ( $userItem->update(['equipped' => 1]) ) {
+                $user->refresh();
+                $item->refresh();
+                
+                $itemsEquipped = $user->items()->wherePivot('equipped', 1)->get();
+                $attack = 5 + $itemsEquipped->sum('attack');
+                $defense = 5 + $itemsEquipped->sum('defense');
+                $user->update([
+                    'attack' => $attack,
+                    'defense' => $defense
+                ]);
+                DB::commit();
+                return $this->jsonSuccess(
+                    ItemResource::make($item),
+                    200,
+                    'Item equipped successfully'
+                );
+            } else {
+                DB::rollback();
+                return $this->jsonError();
+            }
+        } catch (\Exception $e) {
+            return $this->jsonError(null, $e->getCode(), $e->getMessage());
+        }
+    }
 }
