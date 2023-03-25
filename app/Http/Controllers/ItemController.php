@@ -48,7 +48,7 @@ class ItemController extends Controller
                 return $this->jsonError();
             }
         } catch (\Throwable $th) {
-            return $this->jsonError(null, $th->getCode(), $th->getMessage());
+            return $this->jsonError(null, 500, $th->getMessage());
         }
     }
 

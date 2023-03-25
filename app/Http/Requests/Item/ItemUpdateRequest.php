@@ -26,7 +26,7 @@ class ItemUpdateRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:120', Rule::unique('items')->ignore($this->id)->whereNull('deleted_at')],
-            'item_type_id' => ['nullable', 'integer', 'exists:item_types,id'],
+            'item_type_id' => ['required', 'integer', 'exists:item_types,id'],
         ];
     }
 }
