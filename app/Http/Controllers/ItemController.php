@@ -146,10 +146,10 @@ class ItemController extends Controller
 
         $userItem = UserItem::where(['item_id' => $id , 'user_id' => $user->id])->first();
         if (!$userItem) {
-            return $this->jsonError(null, 404, 'Item not buyed');
+            return $this->jsonError(null, 422, 'Item not buyed');
         }
         if ($userItem->equipped == 1) {
-            return $this->jsonError(null, 404, 'Item equipped already');
+            return $this->jsonError(null, 422, 'Item equipped already');
         }
         try {
             DB::beginTransaction();

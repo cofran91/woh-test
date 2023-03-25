@@ -183,11 +183,138 @@ class ItemControllerTest extends TestCase
         $user = Sanctum::actingAs(User::factory()->create(['rol_id' => 2]), ['*']);
         $item = Item::factory()->create();
         
-        $firstResponse = $this->putJson(route('items.buyItem',$item->id) );
+        $response = $this->putJson(route('items.buyItem',$item->id) );
         
         $response = $this->putJson(route('items.buyItem',$item->id) );
 
         $response->assertStatus(422);
         $response->assertJsonStructure([]);
+    }
+
+    /**
+     * @test
+     */
+    public function equip_items_update_user_item()
+    {
+        $user = Sanctum::actingAs(User::factory()->create(['rol_id' => 2]), ['*']);
+        $item = Item::factory()->create();
+        
+        $response = $this->putJson(route('items.buyItem',$item->id) );
+        $response = $this->putJson(route('items.equipItem',$item->id) );
+
+        $response->assertOk();
+        $response->assertJsonStructure([]);
+
+        $items = UserItem::query()
+        ->where('user_id', $user->id)
+        ->where('item_id', $item->id)
+        ->where('equipped', 1)
+        ->get();
+        $this->assertCount(1, $items);
+    }
+
+    /**
+     * @test
+     */
+    public function equip_items_return_error_when_item_does_not_exist()
+    {
+        $user = Sanctum::actingAs(User::factory()->create(['rol_id' => 2]), ['*']);
+        $item = Item::factory()->create(['id' => 1]);
+        
+        $response = $this->putJson(route('items.equipItem',2) );
+
+        $response->assertStatus(404);
+        $response->assertJsonStructure([]);
+    }
+
+    /**
+     * @test
+     */
+    public function equip_items_return_error_when_item_is_not_buyed()
+    {
+        $user = Sanctum::actingAs(User::factory()->create(['rol_id' => 2]), ['*']);
+        $item = Item::factory()->create();
+        
+        $response = $this->putJson(route('items.equipItem',$item->id) );
+
+        $response->assertStatus(422);
+        $response->assertJsonStructure([]);
+    }
+    
+    /**
+     * @test
+     */
+    public function equip_items_return_error_when_item_has_already_equiped()
+    {
+        $user = Sanctum::actingAs(User::factory()->create(['rol_id' => 2]), ['*']);
+        $item = Item::factory()->create();
+        
+        $response = $this->putJson(route('items.buyItem',$item->id) );
+        $response = $this->putJson(route('items.equipItem',$item->id) );
+        
+        $response = $this->putJson(route('items.equipItem',$item->id) );
+
+        $response->assertStatus(422);
+        $response->assertJsonStructure([]);
+    }
+
+    /**
+     * @test
+     */
+    public function equip_items_update_only_one_item_type()
+    {
+        $user = Sanctum::actingAs(User::factory()->create(['rol_id' => 2]), ['*']);
+        $itemOne = Item::factory()->create(['item_type_id' => 1]);
+        $itemTwo = Item::factory()->create(['item_type_id' => 1]);
+        
+        $response = $this->putJson(route('items.buyItem',$itemOne->id) );
+        $response = $this->putJson(route('items.buyItem',$itemTwo->id) );
+        $response = $this->putJson(route('items.equipItem',$itemOne->id) );
+        $response = $this->putJson(route('items.equipItem',$itemTwo->id) );
+
+        $response->assertOk();
+        $response->assertJsonStructure([]);
+
+        $itemOneEquipped = UserItem::query()
+        ->where('user_id', $user->id)
+        ->where('item_id', $itemOne->id)
+        ->where('equipped', 1)
+        ->get();
+        $this->assertCount(0, $itemOneEquipped);
+        
+        $itemTwoEquipped = UserItem::query()
+        ->where('user_id', $user->id)
+        ->where('item_id', $itemTwo->id)
+        ->where('equipped', 1)
+        ->get();
+        $this->assertCount(1, $itemTwoEquipped);
+    }
+
+    /**
+     * @test
+     */
+    public function equip_items_update_user_skills()
+    {
+        $user = Sanctum::actingAs(User::factory()->create(['rol_id' => 2]), ['*']);
+        $item = Item::factory()->create([
+            'attack' => rand(0,20),
+            'defense' => rand(0,20)
+        ]);
+
+        $totalAttack = 5 + $item['attack'];
+        $totalDefense = 5 + $item['defense'];
+        
+        $response = $this->putJson(route('items.buyItem',$item->id) );
+        $response = $this->putJson(route('items.equipItem',$item->id) );
+
+        $response->assertOk();
+        $response->assertJsonStructure([]);
+
+        $items = User::query()
+        ->where('id', $user->id)
+        ->where('attack', $totalAttack)
+        ->where('defense', $totalDefense)
+        ->get();
+        $this->assertCount(1, $items);
     }
 }
