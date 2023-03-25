@@ -133,4 +133,23 @@ class UserController extends Controller
             )->response()->getData(true)
         );
     }
+
+    /**
+     * @return JsonResponse
+     */
+    public function ultiPlayer()
+    {
+        $users = User::with('currentAttack')
+        ->whereHas('currentAttack')
+        ->get()
+        ->filter(function($item) {
+            return $item->currentAttack->attack_type_id == 1;
+        });
+
+        return $this->jsonSuccess( 
+            UserResource::collection(
+                $users
+            )->response()->getData(true)
+        );
+    }
 }
